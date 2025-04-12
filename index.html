@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Name Generator | 中文名生成器</title>
+    <style>
+        :root {
+            --chinese-red: #DE2910;
+            --chinese-red-hover: #C62828;
+            --apple-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            --chinese-font: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            font-family: var(--apple-font);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #FAFAFA;
+            color: #333;
+            line-height: 1.5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--chinese-red) 0%, #FF6B6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: -30px;
+            margin-bottom: 40px;
+            font-family: var(--chinese-font);
+        }
+        .input-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        input[type="text"] {
+            padding: 15px 20px;
+            font-size: 16px;
+            width: 300px;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: var(--chinese-red);
+            box-shadow: 0 0 0 3px rgba(222, 41, 16, 0.1);
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background-color: var(--chinese-red);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        button:hover {
+            background-color: var(--chinese-red-hover);
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background-color: #E0E0E0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+            color: #666;
+        }
+        .error {
+            color: var(--chinese-red);
+            text-align: center;
+            margin: 30px 0;
+            display: none;
+            font-weight: 500;
+        }
+        .results {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .name-card {
+            background-color: #FAFAFA;
+            border-left: 4px solid var(--chinese-red);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+        .name-card:hover {
+            transform: translateX(5px);
+        }
+        .chinese-name {
+            font-size: 28px;
+            color: var(--chinese-red);
+            margin-bottom: 15px;
+            font-family: var(--chinese-font);
+            font-weight: 600;
+        }
+        .meaning {
+            color: #555;
+            line-height: 1.8;
+        }
+        .meaning strong {
+            color: #333;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chinese Name Generator</h1>
+        <p class="subtitle">中文名生成器</p>
+        <div class="input-section">
+            <input type="text" id="englishName" placeholder="Enter your English name | 输入英文名" />
+            <button id="generateBtn" onclick="generateNames()">Generate | 生成</button>
+        </div>
+        <div class="loading" id="loading">Generating your Chinese names... | 正在生成中文名...</div>
+        <div class="error" id="error"></div>
+        <div class="results" id="results"></div>
+    </div>
+    <script>
+        async function generateNames() {
+            const englishName = document.getElementById('englishName').value.trim();
+            if (!englishName) {
+                alert('Please enter your English name! | 请输入英文名！');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+
+            generateBtn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            error.style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:3000/generate-names', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ englishName })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server error | 服务器响应错误');
+                }
+
+                const data = await response.json();
+                displayResults(data.names);
+            } catch (err) {
+                error.textContent = 'Generation failed. Please try again later. | 生成失败，请稍后重试';
+                error.style.display = 'block';
+            } finally {
+                generateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayResults(names) {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            results.style.display = 'block';
+
+            names.forEach(name => {
+                const card = document.createElement('div');
+                card.className = 'name-card';
+                card.innerHTML = `
+                    <div class="chinese-name">${name.chinese}</div>
+                    <div class="meaning">
+                        <strong>Chinese Meaning | 中文寓意：</strong>${name.chineseMeaning}<br>
+                        <strong>English Explanation | 英文解释：</strong>${name.englishMeaning}
+                    </div>
+                `;
+                results.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
